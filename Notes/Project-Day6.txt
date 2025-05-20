@@ -1,0 +1,444 @@
+step48:
+-------
+	Add delete Mapping logic inside EmployeeService.java file.
+
+EmployeeService.java
+--------------------
+package com.ihub.www.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.exception.ResourceNotFoundException;
+import com.ihub.www.model.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired
+	EmployeeRepository employeeRepository;
+	
+	public Employee addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+	
+	public List<Employee> getAllEmployees()
+	{
+		return employeeRepository.findAll();
+	}
+	
+	public Employee getEmployeeById(long id)
+	{
+		return employeeRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Id Not Found"));
+	}
+	
+	public ResponseEntity<Employee> updateEmployee(long id,Employee employee)
+	{
+		if(employeeRepository.existsById(id))
+		{
+			Employee existingEmp = employeeRepository.findById(id).get();
+			existingEmp.setName(employee.getName());
+			existingEmp.setDoj(employee.getDoj());
+			existingEmp.setDept(employee.getDept());
+			
+			employeeRepository.save(existingEmp);
+			
+			return new ResponseEntity<>(existingEmp,HttpStatus.OK);
+		}
+		else
+		{
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+	
+	public ResponseEntity<HttpStatus> deleteEmployee(long id)
+	{
+		Employee employee = employeeRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Id Not Found"));
+		
+		employeeRepository.delete(employee);
+		
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+	
+}
+
+step49:
+------
+	Add delete mapping request inside EmployeeController.java file.
+
+EmployeeController.java
+------------------------
+package com.ihub.www.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/v1/")
+public class EmployeeController 
+{
+	@Autowired
+	EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+	
+	@GetMapping("/employees")
+	public List<Employee> getAllEmployees()
+	{
+		return employeeService.getAllEmployees();
+	}
+	
+	@GetMapping("/employees/{id}")
+	public Employee getEmployeeById(@PathVariable long id)
+	{
+		return employeeService.getEmployeeById(id);
+	}
+	
+	@PutMapping("/employees/{id}")
+	public ResponseEntity<Employee> updateEmployee(@PathVariable long id, @RequestBody Employee employee)
+	{
+		return employeeService.updateEmployee(id, employee);
+	}
+	
+	@DeleteMapping("/employees/{id}")
+	public ResponseEntity<HttpStatus> deleteEmployee(@PathVariable long id)
+	{
+		return employeeService.deleteEmployee(id);
+	}
+}
+
+step50:
+------
+	Add delete method inside EmployeeService.js file.
+
+EmployeeService.js 
+-------------------
+
+import axios from 'axios';
+const EMPLOYEE_API="http://localhost:9191/api/v1/employees";
+
+class EmployeeService
+{
+    addEmployee(employee)
+    {
+        return axios.post(EMPLOYEE_API,employee);
+    }
+
+    getAllEmployees()
+    {
+        return axios.get(EMPLOYEE_API);
+    }
+
+    getEmployeeById(employeeId)
+    {
+        return axios.get(EMPLOYEE_API+'/'+employeeId);
+    }
+
+    updateEmployee(employeeId,employee)
+    {
+        return axios.put(EMPLOYEE_API+'/'+employeeId,employee);
+    }
+    
+    deleteEmployee(employeeId)
+    {
+        return axios.delete(EMPLOYEE_API+'/'+employeeId);
+    }
+}
+export default new EmployeeService();
+
+step51:
+-------
+	Add delete button with logic inside EmployeeListComponent.js file.
+
+EmployeeListComponent.js 
+-------------------------
+
+import { useState, useEffect } from "react";
+import { useTypewriter,Cursor} from 'react-simple-typewriter'
+import {Link} from 'react-router-dom';
+import EmployeeService from "../services/EmployeeService";
+
+function EmployeeListComponent()
+{
+    
+    const [employees,setEmployees]=useState([]);
+
+    const [text] = useTypewriter({
+        words:["Details","Info","List"],
+        loop:true,
+        typeSpeed:120,
+        deleteSpeed:80
+    })
+
+
+    useEffect((e)=>{
+        EmployeeService.getAllEmployees().then(res=>{
+            setEmployees(res.data);
+        })
+    },[])
+
+
+    const deleteEmployee=(id)=>{
+        EmployeeService.deleteEmployee(id).then(res=>{
+            EmployeeService.getAllEmployees().then(res=>{
+                setEmployees(res.data)
+            }).catch(error=>{
+                console.log(error);
+            })
+        })
+    }
+    
+    return(
+         <div className="container mt-5">
+            <h4 className="text-center"> Employee {text}<Cursor/> </h4>
+            <div className="row mt-5">
+        <Link to="/add-emp" className="btn btn-warning w-25 mb-2"> Add Employee </Link>            
+                <table className="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            employees.map(employee =>{
+                                return <tr key={employee.id}>
+                                            <td>{employee.id}</td>
+                                            <td>{employee.name}</td>
+                                            <td>{employee.doj}</td>
+                                            <td>{employee.dept.deptName}</td>
+                                            <td>{employee.dept.designation}</td>
+                                            <td>
+    <Link to={`/update-emp/${employee.id}`} className="btn btn-secondary"> update </Link>  
+    <button className="btn btn-danger" style={{marginLeft:"10px"}} onClick={()=> deleteEmployee(employee.id)}> delete </button>                                      
+                                            </td>
+                                        </tr>
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+         </div>   
+    )
+}
+export default EmployeeListComponent;
+
+step52:
+-----
+	Add view button inside EmployeeListComponent.js file.
+
+
+EmployeeListComponent.js 
+------------------------
+import {useEffect, useState} from 'react';
+import {useTypewriter,Cursor} from 'react-simple-typewriter';
+import {Link, useNavigate} from 'react-router-dom';
+import EmployeeService from '../services/EmployeeService';
+import EmployeeModal from './EmployeeModal';
+
+function EmployeeListComponent()
+{
+    let navigate = useNavigate();
+
+    const [employees,setEmployees]=useState([]);
+    const [selectedEmployee, setSelectedEmployee] = useState(null); 
+
+    const [text] = useTypewriter({
+        words: ['Details','List','Info'],
+        loop: true,
+        typeSpeed: 120,
+        deleteSpeed:80
+    })
+
+    useEffect(()=>{
+        EmployeeService.getEmployees().then(res=>{
+            setEmployees(res.data); 
+        })
+    },[])
+
+    const deleteEmployee = (employeeId) => {
+        EmployeeService.deleteEmployee(employeeId).then(() => {
+            EmployeeService.getEmployees().then(res => {
+                setEmployees(res.data);
+            });
+        }).catch(error => {
+            console.log(error);
+        });
+    };  
+
+    const viewEmployee = (employeeId) => {
+        const employee = employees.find(emp => emp.id === employeeId);
+        if (employee) {
+            setSelectedEmployee(employee); // Set the selected employee to show in modal
+        } else {
+            alert('Employee not found');
+        }
+    }
+
+    const closeModal = () => {
+        setSelectedEmployee(null); // Close modal by resetting selected employee
+    };
+
+
+
+    return(
+        <div className='container mt-3'>
+            <h4 className='text-center'>Employee {text} <Cursor/></h4>
+            <div className='row mt-3'>
+    <Link to="/add-emp" className='btn btn-warning w-25 my-3'> Add Employee </Link>   
+                <table className='table table-bordered table-striped'>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {
+                        employees.map(employee => {
+                            return <tr key={employee.id}>
+                                        <td>{employee.id}</td>
+                                        <td>{employee.name}</td>
+                                        <td>{employee.doj}</td>
+                                        <td>{employee.dept.deptName}</td>
+                                        <td>{employee.dept.designation}</td>
+                                        <td>
+
+    <Link to={`/update-emp/${employee.id}`} className='btn btn-info'> update </Link>
+
+    <button className='btn btn-danger' style={{marginLeft:"10px"}}
+    onClick={()=> deleteEmployee(employee.id)}> delete </button>   
+
+     <button className='btn btn-success' style={{marginLeft:"10px"}}
+    onClick={() => viewEmployee(employee.id)}> view </button>                                     
+                                        </td>
+                                    </tr>
+                        })
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <EmployeeModal 
+                employee={selectedEmployee} 
+                closeModal={closeModal} 
+            />
+
+        </div>
+    )
+}
+export default EmployeeListComponent;
+
+
+Step53:
+------
+	Create EmployeeModal inside "components" folder.
+
+EmployeeModal.js
+-----------------
+import React from 'react';
+import './EmployeeModal.css'; // Import CSS for modal styling
+
+const EmployeeModal = ({ employee, closeModal }) => {
+    if (!employee) return null;
+
+    return (
+        <div className="modal-overlay" onClick={closeModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <h4 className="modal-title text-center">Details</h4>
+                <p><strong>ID:</strong> {employee.id}</p>
+                <p><strong>Name:</strong> {employee.name}</p>
+                <p><strong>Date of Joining:</strong> {employee.doj}</p>
+                <p><strong>Department:</strong> {employee.dept.deptName}</p>
+                <p><strong>Designation:</strong> {employee.dept.designation}</p>
+                <button className="btn btn-danger" onClick={closeModal}>Close</button>
+            </div>
+        </div>
+    );
+};
+
+export default EmployeeModal;
+
+
+
+step54:
+------
+	import EmployeeModal.css file inside EmpoyeeModal.js file.
+
+EmployeeModal.css
+----------------
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.modal-content p {
+    margin: 5px 0;
+}
+
+.modal-content button {
+    margin-top: 10px;
+    width: 100%;
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+}
+

@@ -1,0 +1,333 @@
+step34:
+------
+	Create a form inside CreateEmployeeComponent.js file.
+
+CreateEmployeeComponent.js
+--------------------------
+import { useState } from "react";
+import {useNavigate} from 'react-router-dom';
+import EmployeeService from "../services/EmployeeService";
+
+function CreateEmployeeComponent()
+{
+    const navigate = useNavigate();
+
+    const [employees,setEmployees]= useState({
+        name:"",
+        doj:"",
+        dept:{
+            deptName:"",
+            designation:""
+        }
+    })
+
+    const [errors,setErrors]=useState({
+        name:"",
+        doj:"",
+        deptName:"",
+        designation:""
+    })
+
+    const handleChange=(e)=>{
+        
+        const {name,value}= e.target;
+
+        if(name=="name" || name=="doj")
+        {
+            setEmployees({...employees,[name]:value})
+        }
+        else
+        {
+            setEmployees({...employees,dept:{... employees.dept,[name]:value}});
+        }
+
+        setErrors({...errors,[name]:""})
+    }
+
+    const handleCancel=(e)=>{
+        e.preventDefault();
+        navigate("/employees");
+    }
+
+    const validate=()=>{
+        const tempErrors ={};
+        let isValid=true;
+
+        if(!employees.name)
+        {
+            tempErrors.name="Name is mandatory";
+            isValid=false;
+        }
+         if(!employees.doj)
+        {
+            tempErrors.doj="Date is mandatory";
+            isValid=false;
+        }
+         if(!employees.dept.deptName)
+        {
+            tempErrors.deptName="Department is mandatory";
+            isValid=false;
+        }
+         if(!employees.dept.designation)
+        {
+            tempErrors.designation="Designation is mandatory";
+            isValid=false;
+        }
+
+        setErrors(tempErrors);
+        return isValid;
+    }
+
+    const dateFormat=(date)=>{
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2,"0");
+        const month = String(d.getMonth()+1).padStart(2,"0");
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    const handleSubmit=(e)=>{
+        e.preventDefault();
+
+        if(validate())
+        {
+            const formattedDate = dateFormat(employees.doj);
+            const employeeData={
+                ...employees,doj:formattedDate
+            }
+
+            EmployeeService.addEmployee(employeeData).then(res=>{
+                navigate("/employees");
+            })
+        }
+    }
+
+
+
+    return (
+        <div className="card col-md-6 offset-3">
+            <h5 className="text-center">Add Employee</h5>
+            <div className="card-body">
+                <form>
+                    <label>Name:</label>
+                    <input type="text" name="name" id="name" className="form-control" autoComplete="off"
+                    value={employees.name}
+                    onChange={handleChange}/>
+                    {errors.name && <small className="text-danger">{errors.name}</small>}
+                     
+                    <br/>    
+                    <label>DOJ:</label>
+                    <input type="date" name="doj" id="doj" className="form-control" 
+                    value={employees.doj}
+                    onChange={handleChange}/>
+                    {errors.doj && <small className="text-danger">{errors.doj}</small>}
+
+                     <br/>
+                    <label>Department:</label>
+                    <input type="text" name="deptName" id="deptName" className="form-control" autoComplete="off"
+                    value={employees.dept.deptName}
+                    onChange={handleChange}/>
+                    {errors.deptName && <small className="text-danger">{errors.deptName}</small>}
+
+                     <br/>
+                    <label>Designation:</label>
+                    <input type="text" name="designation" id="designation" className="form-control" autoComplete="off"
+                    value={employees.dept.designation}
+                    onChange={handleChange}/>
+                    {errors.designation && <small className="text-danger">{errors.designation}</small>}
+                    
+                    <br/>
+                    <button className="btn btn-danger mt-3" onClick={handleCancel}> cancel </button>
+                    <button className="btn btn-success mt-3 ms-3" onClick={handleSubmit}> submit </button>
+                </form>
+            </div>
+        </div>
+    )
+}
+export default CreateEmployeeComponent;
+
+step35:
+--------
+	Create a GET mapping logic inside EmployeeService.java file.
+
+EmployeeService.java
+---------------------
+package com.ihub.www.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired
+	EmployeeRepository employeeRepository;
+	
+	public Employee addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+	
+	public List<Employee> getAllEmployees()
+	{
+		return employeeRepository.findAll();
+	}
+}
+
+
+
+step36:
+-------
+	Invoke service GET Mapping method from EmployeeController.java file.
+
+EmployeeController.java
+--------------------------
+package com.ihub.www.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/v1/")
+public class EmployeeController 
+{
+	@Autowired
+	EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+	
+	@GetMapping("/employees")
+	public List<Employee> getAllEmployees()
+	{
+		return employeeService.getAllEmployees();
+	}
+}
+
+step37:
+------
+	Declare GET method inside EmployeeService.js file.
+
+EmployeeService.js
+-----------------
+
+import axios from 'axios';
+const EMPLOYEE_API="http://localhost:9191/api/v1/employees";
+
+class EmployeeService
+{
+    addEmployee(employee)
+    {
+        return axios.post(EMPLOYEE_API,employee);
+    }
+
+    getAllEmployees()
+    {
+        return axios.get(EMPLOYEE_API);
+    }
+}
+export default new EmployeeService();
+
+
+step38:
+------
+
+	Declare useEffect() hook inside EmployeeListComponent.js file and call the GET API.
+
+EmployeeListComponent.js 
+-------------------------
+
+import { useState, useEffect } from "react";
+import { useTypewriter,Cursor} from 'react-simple-typewriter'
+import {Link} from 'react-router-dom';
+import EmployeeService from "../services/EmployeeService";
+
+function EmployeeListComponent()
+{
+    
+    const [employees,setEmployees]=useState([]);
+
+    const [text] = useTypewriter({
+        words:["Details","Info","List"],
+        loop:true,
+        typeSpeed:120,
+        deleteSpeed:80
+    })
+
+
+    useEffect((e)=>{
+        EmployeeService.getAllEmployees().then(res=>{
+            setEmployees(res.data);
+        })
+    },[])
+    
+    return(
+         <div className="container mt-5">
+            <h4 className="text-center"> Employee {text}<Cursor/> </h4>
+            <div className="row mt-5">
+        <Link to="/add-emp" className="btn btn-warning w-25 mb-2"> Add Employee </Link>            
+                <table className="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            employees.map(employee =>{
+                                return <tr key={employee.id}>
+                                            <td>{employee.id}</td>
+                                            <td>{employee.name}</td>
+                                            <td>{employee.doj}</td>
+                                            <td>{employee.dept.deptName}</td>
+                                            <td>{employee.dept.designation}</td>
+                                        </tr>
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+         </div>   
+    )
+}
+export default EmployeeListComponent;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

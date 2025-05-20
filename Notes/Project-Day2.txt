@@ -1,0 +1,303 @@
+step13:
+-------
+	Add rounting logic to App.js file.
+
+App.js 
+------
+import EmployeeListComponent from "./components/EmployeeListComponent";
+import FooterComponent from "./components/FooterComponent";
+import HeaderComponent from "./components/HeaderComponent";
+import './App.css';
+import {BrowserRouter,Routes,Route} from 'react-router-dom';
+
+function App()
+{
+  return (
+      <div className="bg-color">
+          <HeaderComponent/>
+
+          <BrowserRouter>
+             <div className="container mt-5">
+              <Routes>
+                  <Route exact path="/" element={<EmployeeListComponent/>}></Route>
+                  <Route exact path="/employees" element={<EmployeeListComponent/>}></Route>
+              </Routes>
+              </div> 
+          </BrowserRouter>
+          
+          <FooterComponent/>
+      </div>
+  )
+}
+export default App;
+
+
+step14:
+------
+	Test the application by using below request url.
+	ex:
+		http://localhost:3000/
+		http://localhost:3000/employees
+
+
+step15:
+------
+	Install react simple typewriter dependency.
+	ex:
+		npm install react-simple-typewriter 
+
+step16:
+-------
+	Add typewriter effect logic inside EmployeeListComponent.js file.
+
+EmployeeListComponent.js 
+--------------------------
+
+import { useState } from "react";
+import { useTypewriter,Cursor} from 'react-simple-typewriter'
+
+function EmployeeListComponent()
+{
+    const [text] = useTypewriter({
+        words:["Details","Info","List"],
+        loop:true,
+        typeSpeed:120,
+        deleteSpeed:80
+    })
+
+    const [employees,setEmployees]=useState([]);
+    
+    return(
+         <div className="container mt-5">
+            <h4 className="text-center"> Employee {text}<Cursor/> </h4>
+            <div className="row mt-5">
+                <table className="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            employees.map(employee =>{
+                                return <tr key={employee.id}>
+                                            <td>{employee.id}</td>
+                                            <td>{employee.name}</td>
+                                            <td>{employee.doj}</td>
+                                            <td>{employee.dept.deptName}</td>
+                                            <td>{employee.dept.designation}</td>
+                                        </tr>
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+         </div>   
+    )
+}
+export default EmployeeListComponent;
+
+
+Project structure 
+=================
+backend 
+|
+|---src/main/java
+	|
+	|---com.ihub.www
+		|
+		|---BackendApplication.java
+	|
+	|---com.ihub.www.model
+		|
+		|---Employee.java
+		|---Department.java
+	|
+	|---com.ihub.www.repo
+		|
+		|---EmployeeRepository.java
+		|---DepartmentRepository.java
+	|
+	|---com.ihub.www.exception 
+		|
+		|---ResourceNotFoundException.java
+	|	
+	|---com.ihub.www.service
+		|
+		|---EmployeeService.java
+	|
+	|---com.ihub.www.controller 
+		|
+		|---EmployeeController.java
+|
+|---src/main/resources
+|	|
+	|---application.properites
+
+|---src/test/java
+|
+|---pom.xml
+|
+
+step17:
+------
+	Create a spring starter project i.e backend.
+	ex:
+		starters:
+				Spring Web 
+				Spring Data JPA
+				lombok 
+				MySQL driver
+				spring boot DevTools 
+
+step18:
+--------
+	Create a Employee model class inside "com.ihub.www.model" package.
+
+Employee.java
+--------------
+package com.ihub.www.model;
+
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name="employees")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Transactional
+public class Employee 
+{
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long id;
+	
+	@Column
+	private String name;
+	
+	@JsonFormat(shape = JsonFormat.Shape.STRING,pattern="dd-MM-yyyy")
+	private Date doj;
+	
+	@OneToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name="deptId")
+	private Department dept;
+}
+
+step19:
+--------
+	Create a Department model class inside "com.ihub.www.model" package.
+
+Department.java
+---------------
+package com.ihub.www.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Transactional
+public class Department {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private long deptId;
+	
+	@Column
+	private String deptName;
+	
+	@Column
+	private String designation;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
