@@ -1,0 +1,340 @@
+step17:
+-------
+	Add routing logic to routing file i.e App.js.
+
+App.js 
+------
+import './App.css';
+import EmployeeListComponent from './components/EmployeeListComponent';
+import FooterComponent from './components/FooterComponent';
+import HeaderComponent from './components/HeaderComponent';
+import {BrowserRouter,Routes,Route} from 'react-router-dom';
+function App()
+{
+  return(
+    <div className="bg-color">
+          <HeaderComponent/>
+          
+          <BrowserRouter>
+          <div className="container mt-5">
+            <Routes>
+              <Route path='/' element={<EmployeeListComponent/>}></Route>
+              <Route path='/employees' element={<EmployeeListComponent/>}></Route>
+            </Routes>
+          </div>
+          </BrowserRouter>
+
+          <FooterComponent/>
+
+    </div>
+  )
+}
+export default App;
+
+
+
+step18:
+------
+	Check the application by using below request url.
+	ex:
+		http://localhost:3000
+		http://localhost:3000/employees
+
+step19:
+-------
+	Install react  simple typewriter effect package.
+	ex:
+		cd frontend
+		npm install react-simple-typewriter		
+
+step20:
+------
+	Add typewriter effect logic inside EmployeeListComponent.js file.
+
+EmployeeListComponent.js 
+-----------------------
+import { useState } from "react";
+import {useTypewriter,Cursor} from 'react-simple-typewriter';
+function EmployeeListComponent()
+{
+    const [employees,setEmployees] = useState([]);
+
+    const [value] = useTypewriter({
+         words:["Details","List","Info"],
+         loop:true,
+         typeSpeed:120,
+         deleteSpeed:80   
+    })
+
+    return (
+        <div className="container pt-5">
+
+            <h4 className="text-center"> Employee {value} <Cursor/> </h4>
+
+            <div className="row mt-5">
+                <table className="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Designation</th>
+                            <th>Department</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            employees.map(employee=>{
+                                return <tr key={employee.id}>
+                                            <td>{employee.id}</td>
+                                            <td>{employee.name}</td>
+                                            <td>{employee.doj}</td>
+                                            <td>{employee.dept.deptName}</td>
+                                            <td>{employee.dept.designation}</td>
+                                            <td></td>
+                                        </tr>
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    )
+}
+export default EmployeeListComponent;
+
+
+step21:
+-------
+	Create a spring boot stater project i.e backend.
+	ex:
+		starters:
+				Spring Web 
+				Spring Data JPA 
+				MySQL Driver 
+				Lombok
+				Spring Boot DevTools 
+
+Project structure 
+----------------
+backend 
+|
+|---src/main/java
+|	|
+	|---com.ihub.www
+		|
+		|---BackendApplication.java 
+
+	|---com.ihub.www.model 
+		|
+		|---Employee.java
+		|---Department.java
+	
+	|---com.ihub.www.repo
+		|
+		|---EmployeeRepository.java (interface)
+		|---DepartmentRepository.java (interface)
+	
+	|---com.ihub.www.exception
+		|
+		|---ResourceNotFoundException.java
+
+	|---com.ihub.www.service
+		|
+		|---EmployeeService.java
+
+	|---com.ihub.www.controller
+		|
+		|---EmployeeController.java
+	
+|---src/main/resources
+	|
+	|---application.properties 
+|
+|---src/test/java
+|
+|---pom.xml 
+|
+
+
+step22:
+------
+	Create a "Employee.java" file inside "com.ihub.www.model" package.
+
+Employee.java
+-------------
+package com.ihub.www.model;
+
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name="employees")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Transactional
+public class Employee 
+{
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long id;
+	
+	@Column
+	private String name;
+	
+	@JsonFormat(shape= JsonFormat.Shape.STRING,pattern = "dd-MM-yyyy")
+	private Date doj;
+	
+	@OneToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "dept_fk")
+	private Department dept;
+}
+
+
+step23:
+-------
+	Create a "Department.java" file inside "com.ihub.www.model" package.
+
+Department.java
+----------------
+package com.ihub.www.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Transactional
+public class Department 
+{
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private long deptId;
+	
+	@Column
+	private String deptName;
+	
+	@Column
+	private String designation;
+}
+
+
+step24:
+------
+	Create a "EmployeeRepository.java" file inside "com.ihub.www.repo" package.
+
+EmployeeRepository.java
+-----------------------
+package com.ihub.www.repo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.ihub.www.model.Employee;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long>
+{
+	
+}
+
+
+step25:
+------
+	Create a "DepartmentRepository.java" file inside "com.ihub.www.repo" package.
+
+DepartmentRepository.java
+-------------------------
+package com.ihub.www.repo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.ihub.www.model.Department;
+
+@Repository
+public interface DepartmentRepository extends JpaRepository<Department, Long>
+{
+
+}
+
+step26:
+------
+	Create a "ResourceNotFoundException.java" file inside "com.ihub.www.exception" package.
+
+ResourceNotFoundException.java
+------------------------------
+package com.ihub.www.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class ResourceNotFoundException extends RuntimeException
+{
+	private static final long serialVersionUID = 1L;
+
+	public ResourceNotFoundException(String message)
+	{
+		super(message);
+	}
+}
+
+step27:
+-------
+	Create a schema in mysql database.
+	ex:
+		drop schema employee_management_system;
+		create schema employee_management_system;
+		show databases;
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

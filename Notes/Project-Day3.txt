@@ -1,0 +1,499 @@
+step28:
+-------
+	Configure server port, database properties and hibernate properties inside 
+	application.properties.
+
+application.properties 
+----------------------
+spring.application.name=backend
+
+server.port=9191
+
+spring.datasource.driver-class-name= com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/employee_management_system
+spring.datasource.username=root
+spring.datasource.password=root
+
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql= true
+spring.jpa.properties.hibernate.format-sql:true
+
+
+step29:
+-------
+	Create "EmloyeeService.java" file inside "com.ihub.www.service" package.
+
+EmployeeService.java
+--------------------
+package com.ihub.www.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired
+	EmployeeRepository employeeRepository;
+	
+	public  Employee  addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+}
+
+step30:
+------
+	Create "EmployeeController.java" file inside "com.ihub.www.controller" package.
+
+EmployeeController.java
+-----------------------
+package com.ihub.www.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/v1")
+public class EmployeeController 
+{
+	@Autowired
+	EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+}
+
+step31:
+-------
+	Run spring boot starter project and test the application in postman.
+	
+	ex:
+		HTTP Method		URL
+		----------		-----
+		POST 			http://localhost:9191/api/v1/employees	
+					Body
+						Raw (JSON)
+					{
+    						"name":"Alan",
+    						"doj":"18-07-2025",
+    						"dept":{
+        						"deptName":"IT",
+        						"designation":"Developer"
+    						}
+					}
+
+
+step32:
+------
+	create a "services" folder inside "src" folder.
+
+
+step33:
+------
+	Create a "EmployeeService.js" file inside "services" folder.
+
+EmployeeService.js
+------------------
+import axios from 'axios';
+const EMPLOYEE_API = "http://localhost:9191/api/v1/employees";
+
+class EmployeeService
+{
+    addEmployee(employee)
+    {
+        return axios.post(EMPLOYEE_API,employee);
+    }
+}
+export default new EmployeeService();
+
+step34:
+------
+	Create "Add Employee" button inside "EmployeeListComponent.js" file.
+
+EmployeeListComponent.java
+---------------------------
+import { useState } from "react";
+import {useTypewriter,Cursor} from 'react-simple-typewriter';
+import {Link} from 'react-router-dom';
+
+function EmployeeListComponent()
+{
+    const [employees,setEmployees] = useState([]);
+
+    const [value] = useTypewriter({
+         words:["Details","List","Info"],
+         loop:true,
+         typeSpeed:120,
+         deleteSpeed:80   
+    })
+
+    return (
+        <div className="container pt-5">
+
+            <h4 className="text-center"> Employee {value} <Cursor/> </h4>
+
+            <div className="row mt-5">
+                <Link to="/add-emp" className="btn btn-warning mb-3" style={{width:"250px"}}> Add Employee </Link>
+                <table className="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Designation</th>
+                            <th>Department</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            employees.map(employee=>{
+                                return <tr key={employee.id}>
+                                            <td>{employee.id}</td>
+                                            <td>{employee.name}</td>
+                                            <td>{employee.doj}</td>
+                                            <td>{employee.dept.deptName}</td>
+                                            <td>{employee.dept.designation}</td>
+                                            <td></td>
+                                        </tr>
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    )
+}
+export default EmployeeListComponent;
+
+
+step35:
+------
+	Create a "CreateEmployeeComponent.js" file inside "components" folder.
+
+CreateEmployeeComponent.js 
+--------------------------
+function CreateEmployeeComponent()
+{
+    return (
+        <>
+            <h1> Create Employee Component </h1>
+        </>
+    )
+}
+export default CreateEmployeeComponent;	
+
+step36:
+-------
+	Add "CreateEmployeeComponent" to routing file.
+
+App.js 
+-------
+import './App.css';
+import CreateEmployeeComponent from './components/CreateEmployeeComponent';
+import EmployeeListComponent from './components/EmployeeListComponent';
+import FooterComponent from './components/FooterComponent';
+import HeaderComponent from './components/HeaderComponent';
+import {BrowserRouter,Routes,Route} from 'react-router-dom';
+function App()
+{
+  return(
+    <div className="bg-color">
+          <HeaderComponent/>
+          
+          <BrowserRouter>
+          <div className="container mt-5">
+            <Routes>
+              <Route path='/' element={<EmployeeListComponent/>}></Route>
+              <Route path='/employees' element={<EmployeeListComponent/>}></Route>
+              <Route path='/add-emp' element={<CreateEmployeeComponent/>}></Route>
+            </Routes>
+          </div>
+          </BrowserRouter>
+
+          <FooterComponent/>
+
+    </div>
+  )
+}
+export default App;
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Create a form inside CreateEmployeeComponent.js file.
+
+CreateEmployeeComponent.js
+--------------------------
+import { useState } from "react";
+import {useNavigate} from 'react-router-dom';
+import EmployeeService from "../services/EmployeeService";
+
+function CreateEmployeeComponent()
+{
+    const navigate = useNavigate();
+
+    const [employees,setEmployees]= useState({
+        name:"",
+        doj:"",
+        dept:{
+            deptName:"",
+            designation:""
+        }
+    })
+
+    const [errors,setErrors]=useState({
+        name:"",
+        doj:"",
+        deptName:"",
+        designation:""
+    })
+
+    const handleChange=(e)=>{
+        
+        const {name,value}= e.target;
+
+        if(name=="name" || name=="doj")
+        {
+            setEmployees({...employees,[name]:value})
+        }
+        else
+        {
+            setEmployees({...employees,dept:{... employees.dept,[name]:value}});
+        }
+
+        setErrors({...errors,[name]:""})
+    }
+
+    const handleCancel=(e)=>{
+        e.preventDefault();
+        navigate("/employees");
+    }
+
+    const validate=()=>{
+        const tempErrors ={};
+        let isValid=true;
+
+        if(!employees.name)
+        {
+            tempErrors.name="Name is mandatory";
+            isValid=false;
+        }
+         if(!employees.doj)
+        {
+            tempErrors.doj="Date is mandatory";
+            isValid=false;
+        }
+         if(!employees.dept.deptName)
+        {
+            tempErrors.deptName="Department is mandatory";
+            isValid=false;
+        }
+         if(!employees.dept.designation)
+        {
+            tempErrors.designation="Designation is mandatory";
+            isValid=false;
+        }
+
+        setErrors(tempErrors);
+        return isValid;
+    }
+
+    const dateFormat=(date)=>{
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2,"0");
+        const month = String(d.getMonth()+1).padStart(2,"0");
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    const handleSubmit=(e)=>{
+        e.preventDefault();
+
+        if(validate())
+        {
+            const formattedDate = dateFormat(employees.doj);
+            const employeeData={
+                ...employees,doj:formattedDate
+            }
+
+            EmployeeService.addEmployee(employeeData).then(res=>{
+                navigate("/employees");
+            })
+        }
+    }
+
+
+
+    return (
+        <div className="card col-md-6 offset-3">
+            <h5 className="text-center">Add Employee</h5>
+            <div className="card-body">
+                <form>
+                    <label>Name:</label>
+                    <input type="text" name="name" id="name" className="form-control" autoComplete="off"
+                    value={employees.name}
+                    onChange={handleChange}/>
+                    {errors.name && <small className="text-danger">{errors.name}</small>}
+                     
+                    <br/>    
+                    <label>DOJ:</label>
+                    <input type="date" name="doj" id="doj" className="form-control" 
+                    value={employees.doj}
+                    onChange={handleChange}/>
+                    {errors.doj && <small className="text-danger">{errors.doj}</small>}
+
+                     <br/>
+                    <label>Department:</label>
+                    <input type="text" name="deptName" id="deptName" className="form-control" autoComplete="off"
+                    value={employees.dept.deptName}
+                    onChange={handleChange}/>
+                    {errors.deptName && <small className="text-danger">{errors.deptName}</small>}
+
+                     <br/>
+                    <label>Designation:</label>
+                    <input type="text" name="designation" id="designation" className="form-control" autoComplete="off"
+                    value={employees.dept.designation}
+                    onChange={handleChange}/>
+                    {errors.designation && <small className="text-danger">{errors.designation}</small>}
+                    
+                    <br/>
+                    <button className="btn btn-danger mt-3" onClick={handleCancel}> cancel </button>
+                    <button className="btn btn-success mt-3 ms-3" onClick={handleSubmit}> submit </button>
+                </form>
+            </div>
+        </div>
+    )
+}
+export default CreateEmployeeComponent;
