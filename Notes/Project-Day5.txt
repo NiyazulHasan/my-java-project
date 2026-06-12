@@ -1,0 +1,7 @@
+Steps to push the code in GITHUB
+================================
+step1:
+------
+	Create a remote repository.
+	ex:
+		https://github.com/NiyazulHasan/my-java-project

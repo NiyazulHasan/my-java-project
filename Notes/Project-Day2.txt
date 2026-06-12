@@ -1,0 +1,362 @@
+step22:
+-------
+	Create a Footer.jsx file inside "components" folder.
+
+Footer.jsx
+----------
+import '../App.css';
+function Footer()
+{
+    return(
+        <div className="footer">
+            <small>&copy; All Right Reserved - 2026 </small>
+        </div>
+    )
+}
+export default Footer;
+
+step23:
+------
+	Add CSS code for Footer.jsx component inside App.css file.
+
+App.css
+------
+
+.footer
+{
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #ecf0f1;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+}
+
+step24:
+------
+	Create a Login.jsx file inside "components" folder.
+
+Login.jsx
+----------
+function Login()
+{
+    return(
+        <div className="container mt-5">
+            <h1 className="text-center"> Login Component </h1>
+        </div>
+    )
+}
+export default Login;
+
+step25:
+-------
+	Call Header,Login and Footer component from routing file i.e App.jsx.
+
+App.jsx
+-------
+import Header from "./components/Header";
+import Login from "./components/Login";
+import Footer from "./components/Footer";
+import { BrowserRouter,Routes,Route } from "react-router-dom";
+
+function App()
+{
+    return (
+      <div>
+          <BrowserRouter>
+              <Header/>
+              <Routes>
+                <Route path="/login" element={<Login/>}></Route> 
+              </Routes>  
+              <Footer/>
+          </BrowserRouter>
+      </div>
+    )
+}
+export default App;
+
+step26:
+--------
+	Create a EmployeeList.jsx file inside "components" folder.
+
+EmployeeList.jsx
+---------------
+function EmployeeList()
+{
+    return(
+        <div className="container mt-5">
+            <h1 className="text-center"> Employee List Component </h1>
+        </div>
+    )
+}
+export default EmployeeList;
+
+step27:
+--------
+	Add private router to routing file i.e App.jsx file.
+
+App.jsx
+-------
+import Header from "./components/Header";
+import Login from "./components/Login";
+import Footer from "./components/Footer";
+import { BrowserRouter,Routes, Route, Navigate } from "react-router-dom";
+import EmployeeList from "./components/EmployeeList";
+
+function PrivateRouter({children})
+{
+    localStorage.getItem("logged") ? children : <Navigate to="/login"></Navigate>;
+}
+
+function App()
+{
+    return (
+      <div>
+          <BrowserRouter>
+              <Header/>
+              <Routes>
+                <Route path="/login" element={<Login/>}></Route>
+                /* protected pages */
+                <Route exact path="/" element={<PrivateRouter><EmployeeList/></PrivateRouter>}></Route>
+              </Routes>    
+              <Footer/>
+          </BrowserRouter>
+      </div>
+    )
+}
+export default App;
+
+step28:
+-------
+	Check the login page by using below request url.
+	ex:
+		http://localhost:5173/login
+
+step29:
+------
+	Change the background color.
+
+App.jsx
+-------
+import Header from "./components/Header";
+import Login from "./components/Login";
+import Footer from "./components/Footer";
+import { BrowserRouter,Routes, Route, Navigate } from "react-router-dom";
+import EmployeeList from "./components/EmployeeList";
+
+function PrivateRouter({children})
+{
+    return localStorage.getItem("logged") ? children : <Navigate to="/login"></Navigate>;
+}
+
+function App()
+{
+    return (
+      <div className="bg-color">
+          <BrowserRouter>
+              <Header/>
+              <Routes>
+                <Route path="/login" element={<Login/>}></Route>
+                /* protected pages */
+                <Route exact path="/" element={<PrivateRouter><EmployeeList/></PrivateRouter>}></Route>
+              </Routes>    
+              <Footer/>
+          </BrowserRouter>
+      </div>
+    )
+}
+export default App;
+
+
+step30:
+------
+	Write the CSS code inside App.css file.
+
+App.css
+-------
+
+.footer
+{
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #ecf0f1;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+}
+.bg-color
+{
+   height: 100vh;
+   background: linear-gradient(to top,cyan,blue);
+}
+
+
+
+step31:
+-------
+	Create a  "services" folder inside "src" folder.
+
+
+step32:
+------
+	Create AuthService.jsx file inside "src/services" folder.
+
+AuthService.jsx
+---------------
+import axios from 'axios';
+const AUTH_API = "http://localhost:9191/auth/api/login";
+
+class AuthService
+{
+      login(user)
+      {
+        return axios.post(AUTH_API,user);
+      }  
+}
+export default new AuthService();
+
+
+step33:
+-------
+	Create a login form inside Login.jsx file.
+
+Login.jsx
+----------
+import AuthService from "../services/AuthService";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+function Login()
+{
+    const [user, setUser] = useState({username:"", password:""});
+    const [error,setError] = useState("");
+    const navigate = useNavigate();
+
+
+    const handleSubmit = (e)=>
+    {
+        e.preventDefault();
+        
+        AuthService.login(user).then(res=>{
+            if(res.data == true)
+            {
+                localStorage.setItem("logged",true);
+                navigate("/");
+            }
+            else
+            {
+                setError("Invalid username or password");
+            }
+        })
+    }
+
+    return(
+        <div className="container mt-5 pt-5">
+           <div className="card  p-5 w-50 offset-3">
+                <h3 className="text-center"> Login Here </h3>
+                <form onSubmit={handleSubmit}>   
+                <label className="my-3"> UserName: </label>
+                <input type="text" name="username" className="form-control" 
+                    autoComplete="off"
+                    value={user.username}
+                    onChange={(e)=> setUser({...user,username:e.target.value})} required/>
+
+                <label className="my-3"> Password: </label>
+                <input type="password" name="password" className="form-control"
+                value={user.password}
+                onChange={(e)=> setUser({...user,password:e.target.value})} required/>
+
+                {error && <small className="text-center text-danger"> {error}</small>}
+
+                <input type="submit" className="btn btn-primary w-100 mt-5" value="Login" />
+                </form> 
+           </div>
+        </div>
+    )
+}
+export default Login;
+
+
+
+step34:
+-------
+	Add @CrossOrigin annotation inside AuthController.java file.
+
+AuthController.java
+-----------------
+package com.ihub.www.controller;
+
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.service.AuthService;
+
+@CrossOrigin(origins = "http://localhost:5173")
+@RestController
+@RequestMapping("/auth/api")
+public class AuthController 
+{
+	@Autowired
+	private AuthService authService;
+	
+	@PostMapping("/login")
+	public boolean login(@RequestBody Map<String,String> data)
+	{
+		return authService.login(data.get("username"), data.get("password"));
+	}
+}
+
+
+step35:
+-------
+	Open a new terminal and switch to the project.
+	ex:
+		cd frontend
+
+step36:
+--------
+	Install react-simple-typewriter package.
+	ex:
+		npm install react-simple-typewriter 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

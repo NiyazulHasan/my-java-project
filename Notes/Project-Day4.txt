@@ -1,0 +1,1048 @@
+
+
+
+step50:
+-------
+	Write a logic inside CreateEmployee.js file.
+
+CreateEmployee.js
+--------------------------
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import EmployeeService from "../services/EmployeeService";
+function CreateEmployee() 
+{
+
+    const navigate = useNavigate();
+
+    const [employees,setEmployees]=useState({
+        name:"",
+        doj:"",
+        dept:{
+            deptName:"",
+            designation:""
+        }
+    })
+
+    const [errors,setErrors]=useState({
+        name:"",
+        doj:"",
+        deptName:"",
+        designation:""
+    })
+
+    const handleChange=(e)=>{
+        e.preventDefault();
+        const {name,value}=e.target;
+        if(name=="name" || name=="doj")
+        {
+               setEmployees({...employees,[name]:value}); 
+        }
+        else
+        {
+            setEmployees({...employees,dept:{...employees.dept,[name]:value}});
+        }
+
+        setErrors({...errors,[name]:""});
+    }
+
+    const handleCancel=(e)=>{
+        e.preventDefault();
+        navigate("/");
+    }
+
+     const dateFormat=(date)=>{
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2,"0");
+        const month = String(d.getMonth()+1).padStart(2,"0");
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+
+
+    const handleSubmit=(e)=>{
+        e.preventDefault();
+        if(validate())
+        {
+            const formattedDate = dateFormat(employees.doj);
+            const employeeData=
+            {
+                ...employees,doj:formattedDate
+            } 
+
+            EmployeeService.addEmployee(employeeData).then(res=>{
+                navigate("/");
+            })
+
+        }
+    }
+
+    const validate=(e)=>{
+        const formErrors = {};
+        let isValid=true;
+
+        if(!employees.name)
+        {
+            formErrors.name="Name is mandatory";
+            isValid=false;
+        }
+        if(!employees.doj)
+        {
+            formErrors.doj="Date is mandatory";
+            isValid=false;
+        }
+        if(!employees.dept.deptName)
+        {
+            formErrors.deptName="Department name is mandatory";
+            isValid=false;
+        }
+        if(!employees.dept.designation)
+        {
+            formErrors.designation="Designation is mandatory";
+            isValid=false;
+        }
+        setErrors(formErrors);
+        return isValid;
+    }
+
+
+  return (
+    <div className="mt-5">
+        <div className="container pt-3">
+        <div className="card w-50 offset-3 p-3">
+               <h5 className="text-center py-3"> Add Employees </h5>
+               <form>
+                    <label>Name:</label>
+                    <input type="text" id="name" name="name" className="form-control"
+                    value={employees.name}
+                    onChange={handleChange}/>
+                    {errors.name && <small className="text-danger"> {errors.name}</small>}
+                    <br/>
+
+                    <label>DOJ:</label>
+                    <input type="date" id="doj" name="doj" className="form-control"
+                    value={employees.doj}
+                    onChange={handleChange}/>
+                    {errors.doj && <small className="text-danger"> {errors.doj}</small>}
+                    <br/>
+
+                    <label>Department:</label>
+                    <input type="text" id="deptName" name="deptName" className="form-control"
+                    value={employees.dept.deptName}
+                    onChange={handleChange}/>
+                    {errors.deptName && <small className="text-danger"> {errors.deptName}</small>}
+                    <br/>
+
+                    <label>Designation:</label>
+                    <input type="text" id="designation" name="designation" className="form-control"
+                    value={employees.dept.designation}
+                    onChange={handleChange}/>
+                    {errors.designation && <small className="text-danger"> {errors.designation}</small>}
+                    <br/>
+
+                    <button className="btn btn-danger mt-3" onClick={handleCancel}> cancel </button>
+                    <button className="btn btn-success mt-3 float-end" onClick={handleSubmit}> submit </button>
+               </form>
+        </div>
+        </div>
+    </div>
+  )
+}
+
+export default CreateEmployee
+
+
+
+step51:
+------
+	Create a GET Mapping logic inside "EmployeeService.java" file.
+
+EmployeeService.java
+-------------------
+package com.ihub.www.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired 
+	EmployeeRepository employeeRepository;
+	
+	public Employee addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+	
+	public List<Employee> getAllEmployees()
+	{
+		return employeeRepository.findAll();
+	}
+}
+
+
+step52:
+------
+	Create a GET Mapping logic inside "EmployeeController.java" file.
+
+EmployeeController.java
+-----------------------
+package com.ihub.www.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/v1")
+public class EmployeeController
+{
+	@Autowired
+	EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+	
+	@GetMapping("/employees")
+	public List<Employee> getAllEmployees()
+	{
+		return employeeService.getAllEmployees();
+	}
+}
+
+step53:
+------
+	Check GET Mapping request in POSTMAN tool.
+	ex:
+		Method 		URL
+		------		----
+		GET		http://localhost:9191/api/v1/employees
+
+
+step54:
+------
+	Add getAllEmployees() method inside EmployeeService.js file.
+
+EmployeeService.js
+-------------------
+import axios from 'axios';
+const EMPLOYEE_API = "http://localhost:9191/api/v1/employees";
+
+class EmployeeService
+{
+       addEmployee(employee)
+       {
+            return axios.post(EMPLOYEE_API,employee);
+       } 
+       getAllEmployees()
+       {
+            return axios.get(EMPLOYEE_API);
+       }
+}
+export default new EmployeeService();
+
+
+
+step55:
+-------
+	Call addAllEmployees() method inside EmployeeList.jsx component.
+
+EmployeeList.jsx 
+----------------
+import React from 'react'
+import {useTypewriter,Cursor} from 'react-simple-typewriter';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import EmployeeService from '../services/EmployeeService';
+function EmployeeList() 
+{
+  const [employees,setEmployees] = useState([]);
+
+  const [value] = useTypewriter({
+    words : ["Details","Information","List"],
+    loop: true,
+    typeSpeed : 80,
+    deleteSpeed : 120
+  })
+
+  useEffect(()=>{
+    EmployeeService.getAllEmployees().then(res =>{
+        setEmployees(res.data);
+    })
+  },[]);
+
+
+  return (
+    <div className='mt-5'>
+        <h3 className='mt-5 text-center pt-3'>Employee {value} <Cursor/> </h3> 
+        <div className='container mt-5'>
+        <Link to="/add-emp" className='btn btn-secondary w-25 mb-2'> Add Employee </Link>    
+        <table className='table table-bordered table-striped'>
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>DOJ</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    employees.map(emp =>{
+                       return  <tr key={emp.id}>
+                                    <td>{emp.id}</td>
+                                    <td>{emp.name}</td>
+                                    <td>{emp.doj}</td>
+                                    <td>{emp.dept.deptName}</td>
+                                    <td>{emp.dept.designation}</td>
+                                    <td></td>
+                                </tr>
+                    })   
+                }
+            </tbody>
+        </table>
+        </div>
+    </div>
+  )
+}
+
+export default EmployeeList
+
+
+
+
+step56:
+-------
+	Create a UpdateEmployee.jsx component inside "components" folder.
+
+UpdateEmployee.jsx 
+-----------------
+function UpdateEmployee() 
+{
+  return (
+    <div className="mt-5">
+            Update Employee Component 
+    </div>
+  )
+}
+
+export default UpdateEmployee
+
+
+
+step57:
+------
+	Add UpdateEmployee component to routing file i.e App.jsx.
+
+App.js 
+------
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Header from "./components/Header";
+import Login from "./components/Login";
+import Footer from "./components/Footer";
+import CreateEmployee from "./components/CreateEmployee";
+import './App.css';
+import EmployeeList from "./components/EmployeeList";
+import UpdateEmployee from "./components/UpdateEmployee";
+
+function PrivateRoute({ children }) 
+{
+  return localStorage.getItem("logged") ? children : <Navigate to="/login" />;
+}
+
+function App() {
+  return (
+    <div className="bg-color">
+    <BrowserRouter>
+      <Header />
+
+      <Routes>
+
+        <Route exact path="/login" element={<Login />} />
+        {/* protected pages */ }
+        <Route path="/" element={<PrivateRoute><EmployeeList/></PrivateRoute>}/>
+        <Route path="/add-emp" element={<PrivateRoute><CreateEmployee/></PrivateRoute>}/>
+        <Route path="/update-emp/:id" element={<PrivateRoute><UpdateEmployee/></PrivateRoute>}/>
+      </Routes>
+
+      <Footer/>
+    </BrowserRouter>
+    </div>
+  );
+}
+
+export default App;
+
+	
+step58:
+-------
+	Add update button to EmployeeList component.
+
+EmployeeList.jsx 
+---------------
+import { useState , useEffect} from "react";
+import {useTypewriter, Cursor} from 'react-simple-typewriter';
+import { Link } from "react-router-dom";
+import EmployeeService from "../services/EmployeeService";
+function EmployeeList()
+{
+    const [employees, setEmployees] = useState([]);
+
+    const [value] = useTypewriter({
+        words : ["List", "Details", "Information"],
+        loop : true,
+        typeSpeed : 120,
+        deleteSpeed : 80
+    })
+
+    useEffect(()=>{
+        EmployeeService.getAllEmployees().then(res=>{
+            setEmployees(res.data);  
+        })
+    },[])
+
+    return (
+        <div className="mt-5 pt-5">
+           <h3 className="text-center"> Employee {value} <Cursor/> </h3>
+            <div className="container">
+                <div className="row mt-4">
+                    <Link to="/add-emp" className="btn btn-warning" style={{width:"260px"}}> Add Employee</Link>
+                    <table className="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th> ID  </th>
+                                <th> NAME </th>
+                                <th> DOJ </th>
+                                <th> Department </th>
+                                <th> Designation </th>
+                                <th> Actions </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                employees.map(employee => {
+                                    return <tr key={employee.id}>
+                                                <td>{employee.id}</td>
+                                                <td>{employee.name}</td>
+                                                <td>{employee.doj}</td>
+                                                <td>{employee.dept.deptName}</td>
+                                                <td>{employee.dept.designation}</td>
+                                                <td>
+<Link to={`/update-emp/${employee.id}`} className="btn btn-success"> Update </Link>
+                                                </td>
+                                            </tr>
+                                })
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    )
+}
+export default EmployeeList;
+
+
+
+step59:
+-------
+	Create a GET Mapping logic inside EmployeeService.java file.
+
+EmployeeService.java
+--------------------
+package com.ihub.www.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.exception.ResourceNotFoundException;
+import com.ihub.www.model.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired 
+	EmployeeRepository employeeRepository;
+	
+	public Employee addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+	
+	public List<Employee> getAllEmployees()
+	{
+		return employeeRepository.findAll();
+	}
+	
+	public Employee getEmployeeById(long id)
+	{
+		return employeeRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Id Not Found"));
+	}
+}
+
+
+step60:
+-------
+	Add get mapping logic inside EmployeeController.java file.
+
+EmployeeController.java
+-----------------------
+package com.ihub.www.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/v1")
+public class EmployeeController
+{
+	@Autowired
+	EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+	
+	@GetMapping("/employees")
+	public List<Employee> getAllEmployees()
+	{
+		return employeeService.getAllEmployees();
+	}
+	
+	@GetMapping("/employees/{id}")
+	public Employee getEmployeeById(@PathVariable Long id)
+	{
+		return employeeService.getEmployeeById(id);
+	}
+}
+
+
+step61:
+------
+	Write PUT mapping logic inside EmployeeService.java file.
+
+EmployeeService.java
+-------------------
+package com.ihub.www.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.exception.ResourceNotFoundException;
+import com.ihub.www.model.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired 
+	EmployeeRepository employeeRepository;
+	
+	public Employee addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+	
+	public List<Employee> getAllEmployees()
+	{
+		return employeeRepository.findAll();
+	}
+	
+	public Employee getEmployeeById(long id)
+	{
+		return employeeRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Id Not Found"));
+	}
+	
+	public ResponseEntity<Employee> updateEmployee(long id,Employee employee)
+	{
+		if(employeeRepository.existsById(id))
+		{
+			Employee existingEmp = employeeRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Id Not Found"));
+			existingEmp.setName(employee.getName());
+			existingEmp.setDoj(employee.getDoj());
+			existingEmp.setDept(employee.getDept());
+			employeeRepository.save(existingEmp);
+			return new ResponseEntity<>(existingEmp,HttpStatus.OK);
+			
+		}
+		else
+		{
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+}
+
+step62:
+-------
+	Add PUT mapping logic inside EmployeeController.java file.
+
+EmployeeController.java
+------------------------
+package com.ihub.www.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/v1")
+public class EmployeeController
+{
+	@Autowired
+	EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+	
+	@GetMapping("/employees")
+	public List<Employee> getAllEmployees()
+	{
+		return employeeService.getAllEmployees();
+	}
+	
+	@GetMapping("/employees/{id}")
+	public Employee getEmployeeById(@PathVariable long id)
+	{
+		return employeeService.getEmployeeById(id);
+	}
+	
+	@PutMapping("/employees/{id}")
+	public ResponseEntity<Employee> updateEmployee(@PathVariable long id,@RequestBody Employee employee)
+	{
+		return employeeService.updateEmployee(id, employee);
+	}
+}
+
+step63:
+-------
+	Add GET and PUT mapping inside EmployeeService.jsx file.
+
+EmployeeService.jsx 
+------------------
+import axios from 'axios';
+const EMPLOYEE_API = "http://localhost:9191/api/v1/employees";
+
+class EmployeeService
+{
+       addEmployee(employee)
+       {
+            return axios.post(EMPLOYEE_API,employee);
+       } 
+       getAllEmployees()
+       {
+            return axios.get(EMPLOYEE_API);
+       }
+       getEmployeeById(employeeId)
+       {
+          return axios.get(EMPLOYEE_API+'/'+employeeId);
+       }
+       updateEmployee(employeeId,employee)
+       {
+          return axios.put(EMPLOYEE_API+'/'+employeeId,employee);
+       }
+
+
+}
+export default new EmployeeService();
+
+
+step64:
+-------
+	Write the logic inside UpdateEmployee.jsx file.
+
+UpdateEmployee.jsx
+-----------------
+import {useNavigate,useParams} from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import EmployeeService from '../services/EmployeeService.js';
+
+function UpdateEmployee() 
+{
+  let navigate = useNavigate();
+  const {id} = useParams();
+
+  const [name,setName] = useState("");
+  const [doj,setDoj] = useState("");
+  const [department,setDepartment]= useState({deptName:"",designation:""});
+
+  const handleCancel = (e)=>{
+    e.preventDefault();
+    navigate("/");
+  }
+
+  useEffect(()=>{
+    EmployeeService.getEmployeeById(id).then(res=>{
+        setName(res.data.name);
+        setDoj(res.data.doj);
+        setDepartment({
+          deptName: res.data.dept.deptName,
+          designation: res.data.dept.designation
+        })
+    })
+  },[])
+
+  const handleUpdate=(e)=>{
+    e.preventDefault();
+    const updateEmployee={
+      name,
+      doj,
+      dept:{
+          deptName: department.deptName,
+          designation: department.designation
+      }
+    }
+
+    EmployeeService.updateEmployee(id,updateEmployee).then(res=>{
+        navigate("/");
+    })
+  }
+
+
+  return (
+    <div className="pt-5">
+           <div className="container pt-5">
+              <div className="card offset-3 w-50 p-3">
+                  <h5 className="text-center">Update Employee</h5>
+                  <form> 
+                  <label className="my-2">Name:</label>
+                  <input type="text" name="name" id="name" className="form-control"
+                  value={name}
+                  onChange={(e)=> setName(e.target.value)}/>
+
+                  <label className="my-2">DOJ:</label>
+                  <input type="text" name="doj" id="doj" className="form-control"
+                  value={doj}
+                  onChange={(e)=> setDoj(e.target.value)}/>
+
+                  <label className="my-2">Department:</label>
+                  <input type="text" name="deptName" id="deptName" className="form-control"
+                  value={department.deptName}
+                  onChange={(e)=> setDepartment({...department,deptName:e.target.value})}/>
+
+                  <label className="my-2">Designation:</label>
+                  <input type="text" name="designation" id="designation" className="form-control"
+                  value={department.designation}
+                  onChange={(e)=> setDepartment({...department,designation:e.target.value})}/>
+
+                  <button className="btn btn-danger w-25 mt-3 float-start" onClick={handleCancel}> cancel </button>
+                  <button className="btn btn-success w-25 mt-3 float-end" onClick={handleUpdate}> submit </button>
+                  </form> 
+              </div>
+           </div>
+    </div>
+  )
+}
+
+export default UpdateEmployee
+
+
+step65:
+------
+	Add Delete mapping logic inside EmployeeService.java file.
+
+EmployeeService.java
+--------------------
+package com.ihub.www.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.exception.ResourceNotFoundException;
+import com.ihub.www.model.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired 
+	EmployeeRepository employeeRepository;
+	
+	public Employee addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+	
+	public List<Employee> getAllEmployees()
+	{
+		return employeeRepository.findAll();
+	}
+	
+	public Employee getEmployeeById(long id)
+	{
+		return employeeRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Id Not Found"));
+	}
+	
+	public ResponseEntity<Employee> updateEmployee(long id,Employee employee)
+	{
+		if(employeeRepository.existsById(id))
+		{
+			Employee existingEmp = employeeRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Id Not Found"));
+			existingEmp.setName(employee.getName());
+			existingEmp.setDoj(employee.getDoj());
+			existingEmp.setDept(employee.getDept());
+			employeeRepository.save(existingEmp);
+			return new ResponseEntity<>(existingEmp,HttpStatus.OK);
+			
+		}
+		else
+		{
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+	
+	public ResponseEntity<HttpStatus> deleteEmployee(long id)
+	{
+		Employee employee = employeeRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Id Not Found"));
+		employeeRepository.delete(employee);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+	
+}
+
+step66:
+-------
+	Add Delete Mapping logic inside EmployeeController.java file.
+
+EmployeeController.java
+------------------------
+package com.ihub.www.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.model.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/v1")
+public class EmployeeController
+{
+	@Autowired
+	EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+	
+	@GetMapping("/employees")
+	public List<Employee> getAllEmployees()
+	{
+		return employeeService.getAllEmployees();
+	}
+	
+	@GetMapping("/employees/{id}")
+	public Employee getEmployeeById(@PathVariable long id)
+	{
+		return employeeService.getEmployeeById(id);
+	}
+	
+	@PutMapping("/employees/{id}")
+	public ResponseEntity<Employee> updateEmployee(@PathVariable long id,@RequestBody Employee employee)
+	{
+		return employeeService.updateEmployee(id, employee);
+	}
+	
+	@DeleteMapping("/employees/{id}")
+	public ResponseEntity<HttpStatus> deleteEmployee(@PathVariable long id)
+	{
+		return employeeService.deleteEmployee(id);
+	}
+}
+
+step67:
+-------
+	Add delete function inside EmployeeService.jsx file.
+
+EmployeeService.jsx 
+------------------
+import axios from 'axios';
+const EMPLOYEE_API = "http://localhost:9191/api/v1/employees";
+
+class EmployeeService
+{
+       addEmployee(employee)
+       {
+            return axios.post(EMPLOYEE_API,employee);
+       } 
+       getAllEmployees()
+       {
+            return axios.get(EMPLOYEE_API);
+       }
+       getEmployeeById(employeeId)
+       {
+          return axios.get(EMPLOYEE_API+'/'+employeeId);
+       }
+       updateEmployee(employeeId,employee)
+       {
+          return axios.put(EMPLOYEE_API+'/'+employeeId,employee);
+       }
+       deleteEmployee(employeeId)
+       {
+         return axios.delete(EMPLOYEE_API+'/'+employeeId);
+       }
+
+}
+export default new EmployeeService();
+
+
+step68:
+-------
+	Create delete button inside EmployeeList.jsx component file.
+
+EmployeList.jsx 
+---------------
+import { useState , useEffect} from "react";
+import {useTypewriter, Cursor} from 'react-simple-typewriter';
+import { Link } from "react-router-dom";
+import EmployeeService from "../services/EmployeeService";
+function EmployeeList()
+{
+    const [employees, setEmployees] = useState([]);
+
+    const [value] = useTypewriter({
+        words : ["List", "Details", "Information"],
+        loop : true,
+        typeSpeed : 120,
+        deleteSpeed : 80
+    })
+
+    useEffect(()=>{
+        EmployeeService.getAllEmployees().then(res=>{
+            setEmployees(res.data);  
+        })
+    },[])
+
+
+    const deleteEmployee =(id)=>{
+        EmployeeService.deleteEmployee(id).then(res=>{
+            EmployeeService.getAllEmployees().then(res=>{
+                setEmployees(res.data);
+            })
+            .catch(error=>{
+                console.log(error);
+            })
+        })
+    } 
+
+
+    return (
+        <div className="mt-5 pt-5">
+           <h3 className="text-center"> Employee {value} <Cursor/> </h3>
+            <div className="container">
+                <div className="row mt-4">
+                    <Link to="/add-emp" className="btn btn-warning" style={{width:"260px"}}> Add Employee</Link>
+                    <table className="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th> ID  </th>
+                                <th> NAME </th>
+                                <th> DOJ </th>
+                                <th> Department </th>
+                                <th> Designation </th>
+                                <th> Actions </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                employees.map(employee => {
+                                    return <tr key={employee.id}>
+                                                <td>{employee.id}</td>
+                                                <td>{employee.name}</td>
+                                                <td>{employee.doj}</td>
+                                                <td>{employee.dept.deptName}</td>
+                                                <td>{employee.dept.designation}</td>
+                                                <td>
+<Link to={`/update-emp/${employee.id}`} className="btn btn-success"> Update </Link>
+<button className="btn btn-danger ms-3" onClick={(e)=> deleteEmployee(employee.id)}> Delete </button>
+                                                </td>
+                                            </tr>
+                                })
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    )
+}
+export default EmployeeList;
+
+

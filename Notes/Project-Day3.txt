@@ -1,0 +1,457 @@
+step37:
+-------
+	Write a logic inside EmployeeList.jsx file.
+
+EmployeeList.jsx
+----------------
+import { useState } from 'react';
+import {useTypewriter,Cursor} from 'react-simple-typewriter';
+function EmployeeList()
+{
+    const [employees,setEmployees] = useState([]);
+
+    const [value] = useTypewriter({
+        words: ["Details", "Info", "List"],
+        loop : true,
+        typeSpeed : 120,
+        deleteSpeed : 80
+    })
+
+
+    return(
+        <div className="container mt-5 pt-5">
+            <h3 className="text-center text-light"> Employee {value}<Cursor/> </h3>
+            <div className='row mt-5'>
+                <table className='table table-bordered table-striped'>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Dept Name</th>
+                            <th>Designation</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            employees.map(employee=>{
+                                return <tr key={employee.id}>
+                                            <td>{employee.id}</td>
+                                            <td>{employee.name}</td>
+                                            <td>{employee.doj}</td>
+                                            <td>{employee.dept.deptName}</td>
+                                            <td>{employee.dept.designation}</td>
+                                            <td></td>
+                                        </tr>
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    )
+}
+export default EmployeeList;
+
+
+Project Structure 
+-----------------
+backend
+|
+|----src/main/java
+	|
+	|---com.ihub.www
+	|
+	|---com.ihub.www.entity
+		|
+		|---User.java
+		|---Employee.java
+		|---Department.java
+
+	|---com.ihub.www.repo
+		|
+		|---UserRepository.java
+		|---EmployeeRepository.java
+		|---DepartmentRepository.java
+
+	|---com.ihub.www.service
+		|
+		|---AuthService.java
+		|---EmployeeService.java
+
+	|---com.ihub.www.controller
+		|
+		|---AuthController.java
+		|---EmployeeController.java
+
+	|---com.ihub.www.exception
+		|
+		|---ResourceNotFoundException.java
+	
+|----src/main/resources
+	|
+	|---application.yml
+	
+|----src/test/java
+|
+|----pom.xml 
+
+
+step38:
+------
+	Create a Employee.java file inside "com.ihub.www.entity" package.
+
+Employee.java
+-------------
+package com.ihub.www.entity;
+
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "employees")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Employee 
+{
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Column
+	private String name;
+	
+	@JsonFormat(pattern = "dd-MM-yyyy")
+	private Date doj;
+	
+	@OneToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "dept_fk")
+	private Department dept;
+}
+
+
+step39:
+------
+	Create a Department.java file inside "com.ihub.www.entity" package.
+
+Department.java
+---------------
+package com.ihub.www.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Department 
+{
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
+	
+	@Column
+	private String deptName;
+	
+	@Column
+	private String designation;
+}
+
+
+step40:
+-------
+	Create a EmployeeRepository.java file inside "com.ihub.www.repo" package.
+
+EmployeeRepository.java
+-----------------------
+package com.ihub.www.repo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import com.ihub.www.entity.Employee;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, Long>
+{
+
+}
+
+step41:
+------
+	Create a DepartmentRepository.java file inside "com.ihub.www.repo" package.
+
+DepartmentRepository.java
+-------------------------
+package com.ihub.www.repo;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import com.ihub.www.entity.Department;
+
+@Repository
+public interface DepartmentRepository  extends JpaRepository<Department, Long>
+{
+
+}
+
+
+step42:
+------
+	Create a ResourceNotFoundException.java file inside "com.ihub.www.exception" package.
+
+ResourceNotFoundException.java
+------------------------------
+package com.ihub.www.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(value = HttpStatus.BAD_REQUEST)
+public class ResourceNotFoundException extends RuntimeException
+{
+		public ResourceNotFoundException(String message)
+		{
+			super(message);
+		}
+}
+	
+step43:
+------
+	Create a "EmployeeController.java" file inside "com.ihub.www.controller" package.
+
+EmployeeController.java
+----------------------
+package com.ihub.www.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ihub.www.entity.Employee;
+import com.ihub.www.service.EmployeeService;
+
+@CrossOrigin(origins = "http://localhost:5173")
+@RestController
+@RequestMapping("/api/v1")
+public class EmployeeController
+{
+	@Autowired
+	private EmployeeService employeeService;
+	
+	@PostMapping("/employees")
+	public Employee addEmployee(@RequestBody Employee employee)
+	{
+		return employeeService.addEmployee(employee);
+	}
+	
+}
+
+
+step44:
+-------
+	Create a "EmployeeService.java" file inside "com.ihub.www.service" package.
+
+EmployeeService.java
+-------------------
+package com.ihub.www.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.ihub.www.entity.Employee;
+import com.ihub.www.repo.EmployeeRepository;
+
+@Service
+public class EmployeeService 
+{
+	@Autowired
+	private EmployeeRepository employeeRepository;
+	
+	public Employee addEmployee(Employee employee)
+	{
+		return employeeRepository.save(employee);
+	}
+}
+
+step45:
+------
+	Test the application by using POSTMAN tool.
+	ex:
+		HTTP Method		URL 
+		-----------		----
+		POST			http://localhost:9191/api/v1/employees
+					Body
+						Raw (JSON)
+					{	
+						"name":"Alan",
+						"doj": "10-06-2026",
+						"dept":
+						{
+							"deptName":"IT",
+							"designation":"Developer"
+						}		
+					}
+
+step46:
+-------
+	Create a EmployeeService.jsx file inside "services" folder.
+
+EmployeeService.jsx
+------------------
+
+import axios from 'axios';
+const EMPLOYEE_API = "http://localhost:9191/api/v1/employees";
+class EmployeeService
+{
+    addEmployee(employee)
+    {
+        return axios.post(EMPLOYEE_API,employee);
+    }
+}
+export default new EmployeeService();
+
+
+step47:
+-------
+	Add "Add Employee" button inside "EmployeeList.jsx" file.
+
+Employee.jsx
+------------
+import { useState } from 'react';
+import {useTypewriter,Cursor} from 'react-simple-typewriter';
+import { Link } from 'react-router-dom';
+function EmployeeList()
+{
+    const [employees,setEmployees] = useState([]);
+
+    const [value] = useTypewriter({
+        words: ["Details", "Info", "List"],
+        loop : true,
+        typeSpeed : 120,
+        deleteSpeed : 80
+    })
+
+
+    return(
+        <div className="container mt-5 pt-5">
+            <h3 className="text-center text-light"> Employee {value}<Cursor/> </h3>
+            <div className='row mt-5'>
+<Link to="/add-emp" className='btn btn-warning w-25'>  Add Employee </Link>                
+                <table className='table table-bordered table-striped'>
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>DOJ</th>
+                            <th>Dept Name</th>
+                            <th>Designation</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            employees.map(employee=>{
+                                return <tr key={employee.id}>
+                                            <td>{employee.id}</td>
+                                            <td>{employee.name}</td>
+                                            <td>{employee.doj}</td>
+                                            <td>{employee.dept.deptName}</td>
+                                            <td>{employee.dept.designation}</td>
+                                            <td></td>
+                                        </tr>
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    )
+}
+export default EmployeeList;
+
+
+step48:
+------
+	Create a  CreateEmployee.jsx file inside "components" folder.
+
+CreateEmployee.jsx
+------------------
+function CreateEmployee()
+{
+    return(
+        <div className="container mt-5">
+            <h1 className="text-center"> Create Employee </h1>
+        </div>
+    )
+}
+export default CreateEmployee;
+
+step49:
+------
+	Add CreateEmployee component inside routing file i.e App.jsx.
+
+App.jsx
+--------
+import Header from "./components/Header";
+import Login from "./components/Login";
+import Footer from "./components/Footer";
+import { BrowserRouter,Routes, Route, Navigate } from "react-router-dom";
+import EmployeeList from "./components/EmployeeList";
+import CreateEmployee from "./components/CreateEmployee";
+
+function PrivateRouter({children})
+{
+    return localStorage.getItem("logged")? children : <Navigate to="/login"></Navigate>;
+}
+function App()
+{
+    return (
+      <div className="bg-color">
+          <BrowserRouter>
+              <Header/>
+              <Routes>
+                <Route path="/login" element={<Login/>}></Route>
+                /* protected pages */
+                <Route exact path="/" element={<PrivateRouter><EmployeeList/></PrivateRouter>}></Route>
+                <Route path="/add-emp" element={<PrivateRouter><CreateEmployee/></PrivateRouter>}></Route>
+              </Routes>    
+              <Footer/>
+          </BrowserRouter>
+      </div>
+    )
+}
+export default App;
+
+
+
+
+
+
